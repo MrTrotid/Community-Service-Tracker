@@ -1,7 +1,7 @@
 import { FC, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -59,18 +59,24 @@ export const Options: FC = () => {
 
     setIsSubmitting(true);
     try {
-      const userRef = doc(db, 'students', currentUser.uid);
-      await updateDoc(userRef, {
+      const pendingChangesRef = doc(db, 'pendingChanges', currentUser.uid);
+      
+      await setDoc(pendingChangesRef, {
+        userId: currentUser.uid,
         class: selectedClass,
         location: selectedLocation,
-        hasCompletedSetup: true,
-        updatedAt: new Date().toISOString()
+        requestedAt: new Date().toISOString(),
+        status: 'pending',
+        currentClass: currentSettings.class || '',
+        currentLocation: currentSettings.location || '',
+        studentName: currentUser.displayName,
+        studentEmail: currentUser.email
       });
       
-      console.log('User preferences updated:', { class: selectedClass, location: selectedLocation });
+      alert('Your preferences have been submitted for admin approval');
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error updating user preferences:', error);
+      console.error('Error updating preferences:', error);
       alert('Failed to save preferences. Please try again.');
     } finally {
       setIsSubmitting(false);

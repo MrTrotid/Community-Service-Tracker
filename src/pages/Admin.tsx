@@ -31,6 +31,7 @@ export const Admin: FC = () => {
   const [punishmentHours, setPunishmentHours] = useState<number>(0);
   const [punishmentReason, setPunishmentReason] = useState('');
   const [isSubmittingPunishment, setIsSubmittingPunishment] = useState(false);
+  const [pendingPreferences, setPendingPreferences] = useState<any[]>([]);
   const db = getFirestore();
 
   // Fetch all students
@@ -85,6 +86,15 @@ export const Admin: FC = () => {
 
     fetchActivities();
   }, [selectedStudent]);
+
+  useEffect(() => {
+    const fetchPendingPreferences = async () => {
+      const q = query(collection(db, 'pendingChanges'));
+      const snapshot = await getDocs(q);
+      setPendingPreferences(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    };
+    fetchPendingPreferences();
+  }, []);
 
   const handleUpdateStatus = async (activityId: string, newStatus: 'approved' | 'rejected') => {
     if (!selectedStudent) return;
@@ -221,6 +231,26 @@ export const Admin: FC = () => {
       alert('Failed to add punishment hours');
     } finally {
       setIsSubmittingPunishment(false);
+    }
+  };
+
+  const handlePreferenceAction = async (preferenceId: string, userId: string, action: 'approve' | 'reject') => {
+    try {
+      if (action === 'approve') {
+        const preference = pendingPreferences.find(p => p.id === preferenceId);
+        const userRef = doc(db, 'students', userId);
+        await updateDoc(userRef, {
+          class: preference.class,
+          location: preference.location,
+          updatedAt: new Date().toISOString()
+        });
+      }
+      await deleteDoc(doc(db, 'pendingChanges', preferenceId));
+      setPendingPreferences(prev => prev.filter(p => p.id !== preferenceId));
+      alert(`Preference change ${action}ed successfully`);
+    } catch (error) {
+      console.error('Error handling preference:', error);
+      alert('Failed to process preference change');
     }
   };
 
@@ -395,6 +425,43 @@ export const Admin: FC = () => {
           </div>
         </div>
       )}
+
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Pending Preference Changes</h2>
+        <div className="space-y-4">
+          {pendingPreferences.map((preference) => (
+            <div key={preference.id} className="bg-white p-4 rounded-lg shadow">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold">{preference.studentName}</h3>
+                  <p className="text-sm text-gray-600">{preference.studentEmail}</p>
+                  <div className="mt-2">
+                    <p>Class: {preference.currentClass} → {preference.class}</p>
+                    <p>Location: {preference.currentLocation} → {preference.location}</p>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handlePreferenceAction(preference.id, preference.userId, 'approve')}
+                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handlePreferenceAction(preference.id, preference.userId, 'reject')}
+                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {pendingPreferences.length === 0 && (
+            <p className="text-gray-500 text-center">No pending preference changes</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,11 +1,9 @@
 import { FC, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Home: FC = () => {
-  const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, signInWithGoogle } = useAuth();
   const [showTeamInfo, setShowTeamInfo] = useState(false);
 
   const teamMembers = [
@@ -31,6 +29,14 @@ export const Home: FC = () => {
     }
   ];
 
+  const handleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FF] relative overflow-hidden flex items-center">
       {/* Main content */}
@@ -49,7 +55,7 @@ export const Home: FC = () => {
             <div className="flex gap-4 pt-4">
               {!currentUser && (
                 <button 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={handleLogin}
                   className="bg-[#0A1041] text-white px-8 py-2 rounded hover:bg-[#0A1041]/90"
                 >
                   Login

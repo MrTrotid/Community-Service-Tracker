@@ -13,13 +13,23 @@ interface NavLinkProps {
 
 const NavLink: React.FC<NavLinkProps> = ({ to, children, onClick }) => {
   const location = useLocation();
+  const { currentUser } = useAuth();
   const isActive = location.pathname === to;
+
+  // Prevent navigation to protected routes if not logged in
+  const handleClick = (e: React.MouseEvent) => {
+    if (!currentUser && to !== '/') {
+      e.preventDefault();
+      return;
+    }
+    onClick?.();
+  };
 
   return (
     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
       <Link
         to={to}
-        onClick={onClick}
+        onClick={handleClick}
         className={`px-3 py-2 rounded-md text-sm font-medium ${
           isActive ? "bg-gray-900 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"
         }`}
@@ -70,7 +80,6 @@ export const Navigation: React.FC = () => {
               <div className="ml-10 flex items-baseline space-x-4">
                 <NavLink to="/">Home</NavLink>
                 <NavLink to="/dashboard">Dashboard</NavLink>
-                <NavLink to="/activities">Activities</NavLink>
                 <NavLink to="/options">Options</NavLink>
                 <NavLink to="/profile">Profile</NavLink>
                 {isAdmin && <NavLink to="/admin">Admin</NavLink>}
@@ -168,7 +177,6 @@ export const Navigation: React.FC = () => {
                 <>
                   <NavLink to="/" onClick={() => setIsOpen(false)}>Home</NavLink>
                   <NavLink to="/dashboard" onClick={() => setIsOpen(false)}>Dashboard</NavLink>
-                  <NavLink to="/activities" onClick={() => setIsOpen(false)}>Activities</NavLink>
                   <NavLink to="/options" onClick={() => setIsOpen(false)}>Options</NavLink>
                   <NavLink to="/profile" onClick={() => setIsOpen(false)}>Profile</NavLink>
                   {isAdmin && <NavLink to="/admin" onClick={() => setIsOpen(false)}>Admin</NavLink>}

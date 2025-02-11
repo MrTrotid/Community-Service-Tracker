@@ -24,4 +24,8 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
   },
+  server: {
+    host: true, // Listen on all available network interfaces
+    port: 5173, // Default Vite port
+  },
 })

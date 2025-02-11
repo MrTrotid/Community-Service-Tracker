@@ -8,11 +8,11 @@ import { Admin } from './pages/Admin';
 import { Options } from './pages/Options';
 
 export const AppRoutes = () => {
-  const { currentUser, isFirstTimeUser } = useAuth();
+  const { isFirstTimeUser } = useAuth();  // Removed currentUser
 
   return (
     <Routes>
-      <Route path="/" element={currentUser ? <Navigate to="/dashboard" replace /> : <Home />} />
+      <Route path="/" element={<Home />} />
       <Route 
         path="/dashboard" 
         element={
